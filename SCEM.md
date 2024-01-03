@@ -33,7 +33,7 @@ web console:
 
 ---
 ### reporting server
-
+builds and presents reports from data in the data warehouse database
 
 ---
 ### additional ms
@@ -49,7 +49,7 @@ https://learn.microsoft.com/en-us/system-center/scom/system-requirements
 #### hardware
 lowest minimum specs: 4-core 2.66 ghz + 8 gb ram + 10 gb disk space
 highest minimum specs: 8-core 2.66 ghz + 32 gb ram + 10 gb disk space
-### software: 
+#### software: 
 1. server
 + windows server 2019 standard, datacenter
 
@@ -103,8 +103,36 @@ varies depend on scom version
 
 
 ---
-### running services
+### running services on management server
 
+
+---
+### resource pools
+- 3 members = high availability
+- high availability: no loss of monitoring when a member is unavailable
+- quorum algorithm: more than 50% of members available to maintain high availability
+- roles:
+	- members: management server(ms) or gateway server (gs)
+	- observers: same as members, no workflows participation, yes quorum decisions participation, rarely used 
+	- default observer (deob): opsmgr database, enabled by default, allow high availability for pools with less than 3 members
+- scenarios:
+	- management server:
+		- single ms: no high availability, single point of failure, deob gives no benefit
+		- 2 ms: high availability, lose highava if disable deob
+		- 3 ms: highava, can only have max 1 ms down, deob gives no value
+		- 4 ms: highava, max 2 ms down => deob has great value
+		- >4 ms: highava, deob has no value => should be removed
+	- gateway server:
+		- use cases: local agentless coms across small wan circuit, monitor unix/linux servers in a firewalled off dmz (de-militarized zone)
+		- deob should not be used because gateways do not have local sdk services => cannot query database
+	- 2 gs + 1 observer:
+		- rare cases with specific firewall rules need workaround
+		- requires tcp_57523 opened for health service coms
+	- agents-only:
+		- possible but not officially supported by microsoft (supports only ms and gateways)
+		- can only be set up via terminal (powershell)
+
+reference: [Understanding SCOM Resource Pools – Kevin Holman's Blog](https://kevinholman.com/2016/11/21/understanding-scom-resource-pools/)
 
 ---
 ### disaster recovery
@@ -153,7 +181,20 @@ varies depend on scom version
 ---
 ### TLS 1.2
 
+
 ---
+## OMS vs. OM
+- oms is suitable when beginning to extend a small single-server network
+- oms is meant to compliment and extend what om can do for parge enterprise environments, not to replace
+- oms can be used independently to provide log analytics and monitoring controls for small and medium-sized environments with multi-server data centers/deployments 
+- does not require systems center
+- cloud-based management solution for on-prem servers & PM 
+- OMS tools:
+	- Solution Paths
+	- Active Directory
+	- Active Directory Assessments
+	- Replication Health
+	- Upgrade Readiness
 
 # scsm
 *system center service manager*
