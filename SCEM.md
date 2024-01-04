@@ -1,7 +1,6 @@
 # scom
 *system center operations manager*
 https://learn.microsoft.com/en-us/system-center/scom
-
 ![[om2016-basic-management-group.png]]
 
 operations manager: monitor devices and software
@@ -319,16 +318,13 @@ reference: [Implement TLS 1.2 for Operations Manager | Microsoft Learn](https://
 3-tiered application consist of a database, a data access module and a console
 
 ---
+---
+# orchestrator
 
-# scda
-*system center data access*
+
 
 ---
-# scmc
-*system center management configuration*
-
 ---
-
 # interview 
 ## what is scom?
 scom - system center operation manager, is a crucial service within the microsoft system center suite providing infrastructure monitoring that is flexible and cost-effective, helps ensure the predictable performance and availability of vital applications, and offers comprehensive monitoring for datacenter and cloud, both private and public
