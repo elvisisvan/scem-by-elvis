@@ -1,0 +1,52 @@
+/* scuffed reposition of left sidebar to right side, fixed ribbon */
+body.is-hidden-frameless {
+    --window-buttons-width: calc(3 * (2 * 16px + 10px));
+}
+.workspace > :nth-child(n+3) {
+    order: 1;
+}
+.workspace > :nth-child(-n+2) {
+    order: 2;
+}
+.workspace > :nth-child(-n+1) {
+    order: 4;
+    border-left: var(--divider-width) solid var(--divider-color);
+    border-right: none;
+}
+.workspace > :nth-last-child(-n+2) {
+    order: 3;
+}
+.workspace-ribbon.mod-left {
+    position: relative;
+    overflow: visible;
+    margin-top: 0px;
+}
+.workspace-ribbon > .side-dock-actions { 
+    margin-top: var(--header-height);
+}
+.is-hidden-frameless:not(.is-fullscreen) .workspace-tabs.mod-top-right-space > .workspace-tab-header-is-active {
+    padding-right: calc(var(--frame-right-space) - var(--ribbon-width));
+}
+.workspace-tabs.mod-top-right-space > .workspace-tab-header-is-active::after,
+.workspace-tabs.mod-top-right-space > .workspace-tab-header-is-active > :not(.sidebar-toggle-button.mod-right) {
+    order: -1;
+}
+.workspace-tabs.mod-top-right-space > .workspace-tab-header-is-active::after {
+    display: none;
+}
+.is-hidden-frameless .workspace-split.mod-root .workspace-tabs.mod-top .workspace-tab-header-is-active {
+    width: calc(100% - var(--ribbon-width));
+}
+.is-hidden-frameless:has(.mod-left.is-collapsed):has(.mod-right.is-collapsed) .workspace-split.mod-root .workspace-tabs.mod-top .workspace-tab-header-is-active {
+    width: calc(100% - var(--window-buttons-width));
+}
+.is-hidden-frameless .mod-left:is(.workspace-ribbon::before, .sidebar-toggle-button) {
+    left: calc(-1 * (299.5px + var(--ribbon-width) + var(--divider-width)));
+    background-color: var(--titlebar-background);
+}
+.is-hidden-frameless:has(.mod-left.is-collapsed):has(.mod-right.is-collapsed) .mod-left:is(.workspace-ribbon::before, .sidebar-toggle-button) {
+    left: calc(-1 * (var(--window-buttons-width) + var(--divider-width)));
+}
+.is-hidden-frameless:not(:has(.mod-left.is-collapsed), :has(.mod-right.is-collapsed)) .mod-left:is(.workspace-ribbon::before, .sidebar-toggle-button) {
+    left: calc(-1 * ((2 * 299.5px) + var(--ribbon-width) + var(--divider-width)));
+}

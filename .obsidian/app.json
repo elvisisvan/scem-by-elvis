@@ -1,0 +1,13 @@
+{
+  "spellcheck": true,
+  "tabSize": 2,
+  "showUnsupportedFiles": true,
+  "showLineNumber": true,
+  "defaultViewMode": "preview",
+  "showIndentGuide": true,
+  "newFileLocation": "current",
+  "attachmentFolderPath": "./",
+  "newLinkFormat": "relative",
+  "propertiesInDocument": "visible",
+  "alwaysUpdateLinks": true
+}
