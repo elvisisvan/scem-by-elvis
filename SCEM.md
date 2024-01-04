@@ -1,7 +1,7 @@
 # scom
 *system center operations manager*
 https://learn.microsoft.com/en-us/system-center/scom
-![basic][om2016-basic-management-group.png]
+![[om2016-basic-management-group.png]]
 
 operations manager: monitor devices and software
 
@@ -159,7 +159,7 @@ reference: [Understanding SCOM Resource Pools – Kevin Holman's Blog](https://k
 		- secondary deployment: in cold-standby config, no participation in mg until dr is triggered
 	- alternatives:
 		- deploy additional mg components: to retain functionalities of mg, minimum implementation: sql server 2014/2016 always on availability group for operational & data warehouse databases, two-node failover cluster instance (FCI) in primary datacenter, standalone sql server  in secondary datacenter as part of wsfc (windows server failover cluster)
-![simple][om2016-dr-simple-config-expanded.png]
+![[om2016-dr-simple-config-expanded.png]]
 
 		- azure virtual machine: require sql server, set up configurations as described above
 
