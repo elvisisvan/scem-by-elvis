@@ -1,6 +1,8 @@
 # scom
 *system center operations manager*
+
 https://learn.microsoft.com/en-us/system-center/scom
+
 ![basic][om2016-basic-management-group.png]
 
 operations manager: monitor devices and software
