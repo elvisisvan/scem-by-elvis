@@ -219,7 +219,7 @@ reference: https://learn.microsoft.com/en-us/system-center/scom/deploy-single-se
 		- 2 ms: high availability, lose highava if disable deob
 		- 3 ms: highava, can only have max 1 ms down, deob gives no value
 		- 4 ms: highava, max 2 ms down => deob has great value
-		- >4 ms: highava, deob has no value => should be removed
+		- ≥5 ms: highava, deob has no value => should be removed
 	- gateway server:
 		- use cases: local agentless coms across small wan circuit, monitor unix/linux servers in a firewalled off dmz (de-militarized zone)
 		- deob should not be used because gateways do not have local sdk services => cannot query database
