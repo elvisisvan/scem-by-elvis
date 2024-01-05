@@ -432,7 +432,6 @@ reference: [Implement TLS 1.2 for Operations Manager | Microsoft Learn](https://
 	- platform code: shared among activities to run common tasks, generate *common published data*
 	- domain code: run tasks specific to each activity
 
-
 reference: [Overview of Orchestrator Console | Microsoft Learn](https://learn.microsoft.com/en-us/system-center/orchestrator/console-overview)
 # ---
 # interview 
