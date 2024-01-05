@@ -1,25 +1,24 @@
 # scom
 *system center operations manager*
-
 https://learn.microsoft.com/en-us/system-center/scom
+![basic](om2016-basic-management-group.png)
 
-![basic][om2016-basic-management-group.png]
-
-operations manager: monitor devices and software
+operations manager: monitor health of infrastructure
 
 operations console: check health, performance, availability; help identify + resolve problems
 
+---
 ## services
 scom has 3 major services: system center management service, system center data access service (scda), system center management configuration service (sccm)
 - scda: enable opsmgr access to operational database and writes data to database
 - sccm: enable opsmgr access to relationships and topology of management group + distributes management packs
+
+---
 ## setup and deployment
 
 **management group (mg)**: basic unit of functionality in operations manager suite which includes:
 ### management servers (ms)
-
 master admin, communicate with agents, databases
-
 
 ---
 ### consoles: operations vs. web
@@ -114,7 +113,92 @@ varies depend on scom version
 
 ---
 ### deployment
+#### requirements:
+- microsoft sql server instance already exist and accessible
+- sql server collation setting is a supported value
+- *sql full text search* enabled
+- check supported sql server versions: https://learn.microsoft.com/en-us/system-center/scom/plan-sqlserver-design?view=sc-om-2019#sql-server-requirements
+- tcp/ip enabled on remote server hosting sql server database
+- *sql server reporting services* installed & configured (https://learn.microsoft.com/en-us/sql/reporting-services/install-windows/install-reporting-services-native-mode-report-server)
+#### single-server:
+- use cases: evaluation, testing, management pack development
+- environment: non-production (dev, lab, pre-production)
+- services: 
+	- monitoring & alerting
+	- reporting (unavailable in web console)
+	- audit collection
+	- agent-less exception management
+	- data access
+- features:
+	- acs collector & database
+	- ops database
+	- ops console
+	- reporting dwd & reporting database
+	- reporting server
+	- web console server
+	- command shell
+- restricted features:
+	- gateway server
+	- high ava & redundancy
+	- robustness & performance
+- ports:
+	- ops console to ms: tcp/5724
+	- ops console to reporting server: tcp/80
+	- web console to its server: tcp/51908
+	- agent to ms: tcp/5723
+	- acs forwarder to acs collector: tcp/51909
+	- ms to unix/linux: tcp/1270
+	- ms to unix/linux special discovery & troubleshooting: tcp/22
 
+reference: https://learn.microsoft.com/en-us/system-center/scom/deploy-single-server
+#### distributed:
+- support all scom features & server roles
+- install ms: 
+	- graphical: https://learn.microsoft.com/en-us/system-center/scom/deploy-install-mgmt-server?view=sc-om-2019
+	- terminal: run cmd as admin, navigate to opsmgr setup.exe location, execute commands:
+		- to specify /UseLocalSystemActionAccount
+		```powershell
+		/ActionAccountUser: <domain\username> /ActionAccountPassword: <password>
+		```
+		- to specify /UseLocalSystemDASAccount
+		```powershell
+		/DASAccountUser: <domain\username> /DASAccountPassword: <password>
+		```
+		- to install ms
+		```powershell
+		setup.exe /silent /install /components:OMServer
+		/ManagementGroupName: "<ManagementGroupName>"
+		/SqlServerInstance: <server\instance or AG listener>
+		/SqlInstancePort: <SQL instance port number>
+		/DatabaseName: <OperationalDatabaseName>
+		/DWSqlServerInstance: <server\instance or AG listener>
+		/DWSqlInstancePort: <SQL instance port number>
+		/DWDatabaseName: <DWDatabaseName>
+		/UseLocalSystemActionAccount /UseLocalSystemDASAccount
+		/DatareaderUser: <domain\username>
+		/DatareaderPassword: <password>
+		/DataWriterUser: <domain\username>
+		/DataWriterPassword: <password>
+		/EnableErrorReporting: [Never|Queued|Always]
+		/SendCEIPReports: [0|1]
+		/UseMicrosoftUpdate: [0|1]
+		/AcceptEndUserLicenseAgreement: [0|1]
+		```
+	- (optional) additional ms
+		```powershell
+		setup.exe /silent /install /components:OMServer
+		/SqlServerInstance: <server\instance or AG listener>
+		/SqlInstancePort: <SQL instance port number>
+		/DatabaseName: <OperationalDatabaseName>
+		/UseLocalSystemActionAccount /UseLocalSystemDASAccount
+		/DataReaderUser: <domain\username>
+		/DataReaderPassword: <password>
+		/DataWriterUser: <domain\username>
+		/DataWriterPassword: <password>
+		/EnableErrorReporting: [Never|Queued|Always]
+		/SendCEIPReports: [0|1]
+		/UseMicrosoftUpdate: [0|1]
+		```
 
 ---
 ### running services on management server
@@ -161,7 +245,7 @@ reference: [Understanding SCOM Resource Pools – Kevin Holman's Blog](https://k
 		- secondary deployment: in cold-standby config, no participation in mg until dr is triggered
 	- alternatives:
 		- deploy additional mg components: to retain functionalities of mg, minimum implementation: sql server 2014/2016 always on availability group for operational & data warehouse databases, two-node failover cluster instance (FCI) in primary datacenter, standalone sql server  in secondary datacenter as part of wsfc (windows server failover cluster)
-![simple][om2016-dr-simple-config-expanded.png]
+![simple](om2016-dr-simple-config-expanded.png)
 
 		- azure virtual machine: require sql server, set up configurations as described above
 
@@ -171,6 +255,17 @@ reference: [Understanding SCOM Resource Pools – Kevin Holman's Blog](https://k
 
 ### how to connect to operations and web console
 
+#### what if client cannot connect to console?
+1. check health service: windows + r > services.msc > microsoft monitoring agent (health service) > double-click open properties panel > set *startup* type to *automatic* > click *start* if **service status** is not **started**
+2. check antivirus exclusions: 
+- exclusions by process executable: MonitoringHost.exe, HealthService.exe, MOMPerfSnapshotHelper.exe, Microsoft.Mom.Sdk.ServiceHost.exe, cshost.exe
+- exclusions by directories: 
+- exclusions of file type by extension: 
+3. check network issues:
+- agent computer must connect to tcp:5723
+- ports must be enabled: tcp&udp :389 for ldap; tcp&udp :88 for kerberos authentication; tcp&udp :53 for dns
+- rpc communications complete successfully
+- netsh int ipv4 show dynamic
 
 ---
 ### exploring operations and web consoles
@@ -313,20 +408,33 @@ reference: [Implement TLS 1.2 for Operations Manager | Microsoft Learn](https://
 	- Replication Health
 	- Upgrade Readiness
 
+# ---
 # scsm
 *system center service manager*
 6 major parts: service manager management server, server manager database, data warehouse management server, data warehouse databases and service manager console
 3 required accounts: management group administrators, service manager services account and workflow account
 3-tiered application consist of a database, a data access module and a console
 
----
----
+
+# ---
 # orchestrator
+*system center orchestrator* 
+- is an automation tool
+- automate Windows Azure operations related to certificates, deployments, cloud services, storage, and virtual machines
+- support virtualization
+- installation prerequisites:
+	- microsoft sql server 2016/2017
+	- iis (internet information services)
+	- .net 3.5 service pack 1
+	- .net 4
+	- microsoft sql server 2012 native client
+- types of codes to run tasks: 
+	- platform code: shared among activities to run common tasks, generate *common published data*
+	- domain code: run tasks specific to each activity
 
 
-
----
----
+reference: [Overview of Orchestrator Console | Microsoft Learn](https://learn.microsoft.com/en-us/system-center/orchestrator/console-overview)
+# ---
 # interview 
 ## what is scom?
 scom - system center operation manager, is a crucial service within the microsoft system center suite providing infrastructure monitoring that is flexible and cost-effective, helps ensure the predictable performance and availability of vital applications, and offers comprehensive monitoring for datacenter and cloud, both private and public
