@@ -245,10 +245,27 @@ reference: [Understanding SCOM Resource Pools – Kevin Holman's Blog](https://k
 		- secondary deployment: in cold-standby config, no participation in mg until dr is triggered
 	- alternatives:
 		- deploy additional mg components: to retain functionalities of mg, minimum implementation: sql server 2014/2016 always on availability group for operational & data warehouse databases, two-node failover cluster instance (FCI) in primary datacenter, standalone sql server  in secondary datacenter as part of wsfc (windows server failover cluster)
+		- azure virtual machine: require sql server, set up configurations as described above
 ![simple](om2016-dr-simple-config-expanded.png)
 
-		- azure virtual machine: require sql server, set up configurations as described above
+---
+### complete setup process
+1. domain controller (dc): create admin users (and optionally backup admin users) and add them all to a group (om administrator security group)
+2. dc: add om administrators security group to builtin administrators group
+3. (sql) server: add om administrators security group to local administrators group
+4. sql: turn off firewall for domain networks
+5. sql: install sql 2019 (developer edition), 
+6. sql: install sql latest cumulative update
+7. sql: install sql serever reporting services
+8. sql: install ssms
+9. management server (ms): add om administrators security group to local administrators group
+10. ms: install sqlsysclrtypes 2014
+11. ms: install reportviewer 2015
+12. ms: run powershell command to activate iis
+13. ms: install scom 2019 management server + operations console + web console
+14. sql: install scom 2019 reporting server
 
+reference: [SCOM 2019 – QuickStart Deployment Guide – Kevin Holman's Blog](https://kevinholman.com/2019/03/14/scom-2019-quickstart-deployment-guide)
 
 ---
 ## operations and web consoles
@@ -408,6 +425,14 @@ reference: [Implement TLS 1.2 for Operations Manager | Microsoft Learn](https://
 	- Replication Health
 	- Upgrade Readiness
 
+---
+## terminal commands
+
+Activate IIS on ms:
+```powershell
+Add-WindowsFeature NET-WCF-HTTP-Activation45,Web-Static-Content,Web-Default-Doc,Web-Dir-Browsing,Web-Http-Errors,Web-Http-Logging,Web-Request-Monitor,Web-Filtering,Web-Stat-Compression,Web-Mgmt-Console,Web-Metabase,Web-Asp-Net,Web-Windows-Auth –Restart
+```
+get-scomgroup _#_ print scom groups
 # ---
 # scsm
 *system center service manager*
@@ -431,6 +456,7 @@ reference: [Implement TLS 1.2 for Operations Manager | Microsoft Learn](https://
 - types of codes to run tasks: 
 	- platform code: shared among activities to run common tasks, generate *common published data*
 	- domain code: run tasks specific to each activity
+
 
 reference: [Overview of Orchestrator Console | Microsoft Learn](https://learn.microsoft.com/en-us/system-center/orchestrator/console-overview)
 # ---
