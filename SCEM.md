@@ -256,7 +256,7 @@ reference: [Understanding SCOM Resource Pools – Kevin Holman's Blog](https://k
 4. sql: turn off firewall for domain networks
 5. sql: install sql 2019 (developer edition), 
 6. sql: install sql latest cumulative update
-7. sql: install sql serever reporting services
+7. sql: install sql server reporting services
 8. sql: install ssms
 9. management server (ms): add om administrators security group to local administrators group
 10. ms: install sqlsysclrtypes 2014
@@ -433,6 +433,9 @@ Activate IIS on ms:
 Add-WindowsFeature NET-WCF-HTTP-Activation45,Web-Static-Content,Web-Default-Doc,Web-Dir-Browsing,Web-Http-Errors,Web-Http-Logging,Web-Request-Monitor,Web-Filtering,Web-Stat-Compression,Web-Mgmt-Console,Web-Metabase,Web-Asp-Net,Web-Windows-Auth –Restart
 ```
 get-scomgroup _#_ print scom groups
+`setspn -l [domain]\[server name]` _#_ list registered spns 
+
+
 # ---
 # scsm
 *system center service manager*
@@ -507,3 +510,52 @@ gateway server: enables the monitoring of computers in untrusted domains
 ## proxy agent vs regular agent
 agentless monitoring: a proxy (remote) agent is an agent that can forward data to a management server on behalf of a computer or network device other than its host computer; 
 agent monitoring: 
+
+# ---
+# troubleshoots
+## Failed to connect to server, the data access service is either not running or not yet initialized
+
+![[Pasted image 20240115114807.png]]
+- error log:
+	```powershell
+	Date: 1/15/2024 4:42:38 AM
+	Application: Operations Manager
+	Application Version: 10.19.10050.0
+	Severity: Error
+	Message: Failed to connect to server 'MS.VANLE.lab'
+	
+	Microsoft.EnterpriseManagement.Common.ServiceNotRunningException: The Data Access service is either not running or not yet initialized. Check the event log for more information. ---> System.ServiceModel.EndpointNotFoundException: Could not connect to net.tcp://ms.vanle.lab:5724/DispatcherService. The connection attempt lasted for a time span of 00:00:02.0030047. TCP error code 10061: No connection could be made because the target machine actively refused it 10.96.136.6:5724.  ---> System.Net.Sockets.SocketException: No connection could be made because the target machine actively refused it 10.96.136.6:5724
+	   at System.Net.Sockets.Socket.DoConnect(EndPoint endPointSnapshot, SocketAddress socketAddress)
+	   at System.Net.Sockets.Socket.Connect(EndPoint remoteEP)
+	   at System.ServiceModel.Channels.SocketConnectionInitiator.Connect(Uri uri, TimeSpan timeout)
+	   --- End of inner exception stack trace ---
+	
+	Server stack trace: 
+	   at System.ServiceModel.Channels.SocketConnectionInitiator.Connect(Uri uri, TimeSpan timeout)
+	   at System.ServiceModel.Channels.BufferedConnectionInitiator.Connect(Uri uri, TimeSpan timeout)
+	   at System.ServiceModel.Channels.ConnectionPoolHelper.EstablishConnection(TimeSpan timeout)
+	   at System.ServiceModel.Channels.ClientFramingDuplexSessionChannel.OnOpen(TimeSpan timeout)
+	   at System.ServiceModel.Channels.CommunicationObject.Open(TimeSpan timeout)
+	   at System.ServiceModel.Channels.LayeredChannel`1.OnOpen(TimeSpan timeout)
+	   at System.ServiceModel.Channels.CommunicationObject.Open(TimeSpan timeout)
+	   at System.ServiceModel.Channels.ServiceChannel.OnOpen(TimeSpan timeout)
+	   at System.ServiceModel.Channels.CommunicationObject.Open(TimeSpan timeout)
+	   at System.ServiceModel.Channels.ServiceChannel.CallOpenOnce.System.ServiceModel.Channels.ServiceChannel.ICallOnce.Call(ServiceChannel channel, TimeSpan timeout)
+	   at System.ServiceModel.Channels.ServiceChannel.CallOnceManager.CallOnce(TimeSpan timeout, CallOnceManager cascade)
+	   at System.ServiceModel.Channels.ServiceChannel.EnsureOpened(TimeSpan timeout)
+	   at System.ServiceModel.Channels.ServiceChannel.Call(String action, Boolean oneway, ProxyOperationRuntime operation, Object[] ins, Object[] outs, TimeSpan timeout)
+	   at System.ServiceModel.Channels.ServiceChannelProxy.InvokeService(IMethodCallMessage methodCall, ProxyOperationRuntime operation)
+	   at System.ServiceModel.Channels.ServiceChannelProxy.Invoke(IMessage message)
+	
+	Exception rethrown at [0]: 
+	   at System.Runtime.Remoting.Proxies.RealProxy.HandleReturnMessage(IMessage reqMsg, IMessage retMsg)
+	   at System.Runtime.Remoting.Proxies.RealProxy.PrivateInvoke(MessageData& msgData, Int32 type)
+	   at Microsoft.EnterpriseManagement.Common.Internal.IDispatcherService.Connect(SdkClientConnectionOptions connectionOptions)
+	   at Microsoft.EnterpriseManagement.Common.Internal.SdkDataLayerProxyCore.Initialize(EnterpriseManagementConnectionSettings connectionSettings, SdkChannelObject`1 channelObjectDispatcherService)
+	   at Microsoft.EnterpriseManagement.Common.Internal.SdkDataLayerProxyCore.CreateEndpoint[T](EnterpriseManagementConnectionSettings connectionSettings, SdkChannelObject`1 channelObjectDispatcherService)
+	   --- End of inner exception stack trace ---
+	   at Microsoft.EnterpriseManagement.Common.Internal.ExceptionHandlers.HandleChannelExceptions(Exception ex)
+	   at Microsoft.EnterpriseManagement.Common.Internal.SdkDataLayerProxyCore.CreateEndpoint[T](EnterpriseManagementConnectionSettings connectionSettings, SdkChannelObject`1 channelObjectDispatcherService)
+	   at Microsoft.EnterpriseManagement.Common.Internal.SdkDataLayerProxyCore.ConstructEnterpriseManagementGroupInternal[T,P](EnterpriseManagementConnectionSettings connectionSettings, ClientDataAccessCore clientCallback)
+	   at Microsoft.EnterpriseManagement.Common.Internal.SdkDataLayerProxyCore.RetrieveEnterpriseManagementGroupInternal[T,P
+	```
