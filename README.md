@@ -229,8 +229,14 @@ reference: https://learn.microsoft.com/en-us/system-center/scom/deploy-single-se
 	- agents-only:
 		- possible but not officially supported by microsoft (supports only ms and gateways)
 		- can only be set up via terminal (powershell)
-
 reference: [Understanding SCOM Resource Pools – Kevin Holman's Blog](https://kevinholman.com/2016/11/21/understanding-scom-resource-pools/)
+
+- how to remove a resource pool member: opsmgr > administration > resource pools > tasks > **manual membership** > pool membership > delete
+- how to return resource pool to automatic membership: 
+	```powershell
+	Get-SCOMResourcePool -DisplayName "Resource Pool Name" | Set-SCOMResourcePool -EnableAutomaticMembership 1
+	```
+	replace "resource pool name" with actual pool name
 
 ---
 ### disaster recovery
@@ -243,6 +249,7 @@ reference: [Understanding SCOM Resource Pools – Kevin Holman's Blog](https://k
 	- 2 common dr options:
 		- duplication: similar in scale and configuration to primary mg, no tolerance for downtime, most complex, includes integration with itsm platforms (scsm, remedy, servicenow, etc.), data duplication
 		- secondary deployment: in cold-standby config, no participation in mg until dr is triggered
+		- ![[Pasted image 20240118154632.png]]
 	- alternatives:
 		- deploy additional mg components: to retain functionalities of mg, minimum implementation: sql server 2014/2016 always on availability group for operational & data warehouse databases, two-node failover cluster instance (FCI) in primary datacenter, standalone sql server  in secondary datacenter as part of wsfc (windows server failover cluster)
 		- azure virtual machine: require sql server, set up configurations as described above
@@ -290,7 +297,8 @@ reference: [SCOM 2019 – QuickStart Deployment Guide – Kevin Holman's Blog](h
 
 ---
 ### run web console server on standalone server
-
+`hostname` _#_ print server name
+`http://[server name]/operationsmanager` _#_ open web console to hosting server
 
 ---
 ## security
@@ -412,6 +420,19 @@ reference: [Implement TLS 1.2 for Operations Manager | Microsoft Learn](https://
 
 
 ---
+---
+## Gateway and workgroup servers
+### configure certificate for workgroup/gateway server
+1. dc: add active directory certificate services: 
+![[Pasted image 20240119163517.png]]
+2. select "certificate enrollment web service" and "certificate authority web enrollment" role services
+![[Pasted image 20240119163455.png]]
+3. ad cs configuration: install "certification authority" before installing "certification authority web enrollment" and certificate enrollment web service"
+![[Pasted image 20240119181916.png]]
+- successful installation:
+![[Pasted image 20240119182011.png]]
+
+
 ## OMS vs. OM
 - oms is suitable when beginning to extend a small single-server network
 - oms is meant to compliment and extend what om can do for parge enterprise environments, not to replace
@@ -434,6 +455,8 @@ Add-WindowsFeature NET-WCF-HTTP-Activation45,Web-Static-Content,Web-Default-Doc,
 ```
 get-scomgroup _#_ print scom groups
 `setspn -l [domain]\[server name]` _#_ list registered spns 
+`Get-SCOMResourcePool -DisplayName "Resource Pool Name" | Set-SCOMResourcePool -EnableAutomaticMembership 1` _#_ set resource pool membership type to automatic
+get-windowsfeature -computername [hostname] | where installed _#_ list installed features
 
 
 # ---
