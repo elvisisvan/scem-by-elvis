@@ -13,11 +13,11 @@ scom has 3 major services: system center management service, system center data 
 - scda: enable opsmgr access to operational database and writes data to database
 - sccm: enable opsmgr access to relationships and topology of management group + distributes management packs
 
----
+## ---
 ## setup and deployment
 
 **management group (mg)**: basic unit of functionality in operations manager suite which includes:
-### management servers (ms)
+### management server (ms)
 master admin, communicate with agents, databases
 
 ---
@@ -274,7 +274,7 @@ reference: [Understanding SCOM Resource Pools – Kevin Holman's Blog](https://k
 
 reference: [SCOM 2019 – QuickStart Deployment Guide – Kevin Holman's Blog](https://kevinholman.com/2019/03/14/scom-2019-quickstart-deployment-guide)
 
----
+## ---
 ## operations and web consoles
 
 ### how to connect to operations and web console
@@ -295,12 +295,12 @@ reference: [SCOM 2019 – QuickStart Deployment Guide – Kevin Holman's Blog](h
 ### exploring operations and web consoles
 
 
----
+## ---
 ### run web console server on standalone server
 `hostname` _#_ print server name
 `http://[server name]/operationsmanager` _#_ open web console to hosting server
 
----
+## ---
 ## security
 
 ### ports 
@@ -316,15 +316,38 @@ reference: [SCOM 2019 – QuickStart Deployment Guide – Kevin Holman's Blog](h
 
 ---
 ### configure SPNs
-
+spn: service principal names
+in management server powershell
+to list registered spn:
+```powershell
+setspn -l [domain]\[server name]
+```
+example: 
+```
+setspn -l elvis\ms
+```
+to register spn (for each management server):
+```
+setspn -s MSOMSdkSvc/[server name].opsmgr.net [domain]\omdas
+setspn -s MSOMSdkSvc/[server name] [domain]\omdas
+```
 
 ---
 ### run-as accounts and profiles
+provide elevated authority under low-privilege environment 
 
+operations manger > administration > run as configuration > create run as account
+
+reference: https://learn.microsoft.com/en-us/system-center/scom/plan-security-runas-accounts-profiles
 
 ---
 ### user roles
+role-based security is to limit privileges that users have for various aspects of operations manager
 
+operations manager > administration > security > user roles > right-click user roles pane > new user role
+
+reference: https://learn.microsoft.com/en-us/system-center/scom/manage-security-overview
+https://learn.microsoft.com/en-us/system-center/scom/manage-security-create-runas-account
 
 ---
 ### TLS 1.2
@@ -419,8 +442,26 @@ reference: [SCOM 2019 – QuickStart Deployment Guide – Kevin Holman's Blog](h
 reference: [Implement TLS 1.2 for Operations Manager | Microsoft Learn](https://learn.microsoft.com/en-us/system-center/scom/plan-security-tls12-config?view=sc-om-2019)
 
 
+## ---
+## Agents 
+### agent vs agentless monitoring
+(regular agent vs proxy agent)
+agentless monitoring: a proxy (remote) agent is an agent that can forward data to a management server on behalf of a computer or network device other than its host computer; 
+agent monitoring: microsoft monitoring agent, aka health service, is installed on the computer/server
+
 ---
+### multi-homing
+make an Operations Manager agent a member of multiple management groups (max 4 management groups)
+reference: https://learn.microsoft.com/en-us/system-center/scom/manage-deploy-config-windows-agent
+
 ---
+### agent cache
+
+---
+### maintenance mode
+
+
+## ---
 ## Gateway and workgroup servers
 ### configure certificate for workgroup/gateway server
 1. dc: add active directory certificate services: 
@@ -433,6 +474,8 @@ reference: [Implement TLS 1.2 for Operations Manager | Microsoft Learn](https://
 ![[Pasted image 20240119182011.png]]
 
 
+---
+## 
 ## OMS vs. OM
 - oms is suitable when beginning to extend a small single-server network
 - oms is meant to compliment and extend what om can do for parge enterprise environments, not to replace
@@ -490,12 +533,6 @@ reference: [Overview of Orchestrator Console | Microsoft Learn](https://learn.mi
 ## what is scom?
 scom - system center operation manager, is a crucial service within the microsoft system center suite providing infrastructure monitoring that is flexible and cost-effective, helps ensure the predictable performance and availability of vital applications, and offers comprehensive monitoring for datacenter and cloud, both private and public
 
-## what is management group in scom? how does it work?
-management group is a basic unit of functionality of operation manager, at minimum it consists of a *management server*, *operational database* and *reporting data warehouse database* (and an additional *reporting server* if reporting functionality is installed)
-
-## services of scom? (verbose details)
-services within scom are: management servers, agents, management packs, services (microsoft monitoring agent), 
-
 ## what is resource pooling in scom? how does it work?
 resource pool is an pool consists of multiple management servers  spreading workloads across these servers; 
 - newly added management servers are assigned some of the work from existing servers; 
@@ -523,16 +560,6 @@ dwd is for historical purposes, stores monitoring & alerting data & always conta
 ## difference between rules and monitoring?
 rules: defines the events and performance data to collect from computers and what to do with the information after collected, simply understand, it's if/then statement
 monitors: define health state for particular aspects of the monitored object; can be configured to generate an laert when a state change occurs
-
-## reporting server
-
-
-## gateway server
-gateway server: enables the monitoring of computers in untrusted domains
-
-## proxy agent vs regular agent
-agentless monitoring: a proxy (remote) agent is an agent that can forward data to a management server on behalf of a computer or network device other than its host computer; 
-agent monitoring: 
 
 # ---
 # troubleshoots
