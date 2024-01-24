@@ -295,7 +295,7 @@ reference: [SCOM 2019 – QuickStart Deployment Guide – Kevin Holman's Blog](h
 ### exploring operations and web consoles
 
 
-## ---
+---
 ### run web console server on standalone server
 `hostname` _#_ print server name
 `http://[server name]/operationsmanager` _#_ open web console to hosting server
@@ -443,7 +443,7 @@ reference: [Implement TLS 1.2 for Operations Manager | Microsoft Learn](https://
 
 
 ## ---
-## Agents 
+## agents 
 ### agent vs agentless monitoring
 (regular agent vs proxy agent)
 agentless monitoring: a proxy (remote) agent is an agent that can forward data to a management server on behalf of a computer or network device other than its host computer; 
@@ -462,7 +462,7 @@ reference: https://learn.microsoft.com/en-us/system-center/scom/manage-deploy-co
 
 
 ## ---
-## Gateway and workgroup servers
+## gateway and workgroup servers
 ### configure certificate for workgroup/gateway server
 1. dc: add active directory certificate services: 
 ![[Pasted image 20240119163517.png]]
@@ -474,8 +474,36 @@ reference: https://learn.microsoft.com/en-us/system-center/scom/manage-deploy-co
 ![[Pasted image 20240119182011.png]]
 
 
+## ---
+## management packs
+contains monitoring settings for app and services that operations manager relies on to know how to monitor objects; 
+operations manager > administration > management packs > 
+### parts
+- monitors: keep track of classes of instances
+- rules: defines and instruct how to process events and collected performance data
+- tasks: scripts or exe code, diagnostic tasks to find problems and recovery task to fix them
+- reports: can be customized to specify target objects
+- views: console view visualizing states, alerts, performance for increased insights
+- object discoveries: find and overrides specific objects need to be monitored or not
+- run-as profiles: provide credentials to run rules, monitors, tasks, discoveries
 ---
-## 
+### types
+- sealed: binary (.mp) files downloaded from apps or hardware devices, cannot be edited
+- unsealed: .xml files, can be edited
+- library: foundation of classes other mgmt packs depend, often downloaded from opsmgr catalog
+
+---
+### how to seal management packs
+```powershell
+sn -k c:\mps\key\PairKey.snk
+sn -p c:\mps\key\PairKey.snk c:\mps\key\PubKey
+sn -tp c:\mps\key\PubKey
+mpseal c:\mps\input\_unsealed_mp_.xml /I “c:\mps\mp” /Keyfile “c:\mps\key\PairKey.snk” /Company “_Your Company_” /Outdir “c:\mps\output”
+```
+reference: https://learn.microsoft.com/en-us/system-center/scom/manage-overview-management-pack
+https://social.technet.microsoft.com/wiki/contents/articles/15309.operations-manager-management-pack-authoring-sealing-a-management-pack.aspx
+
+## ---
 ## OMS vs. OM
 - oms is suitable when beginning to extend a small single-server network
 - oms is meant to compliment and extend what om can do for parge enterprise environments, not to replace
@@ -489,7 +517,7 @@ reference: https://learn.microsoft.com/en-us/system-center/scom/manage-deploy-co
 	- Replication Health
 	- Upgrade Readiness
 
----
+## ---
 ## terminal commands
 
 Activate IIS on ms:
@@ -497,10 +525,10 @@ Activate IIS on ms:
 Add-WindowsFeature NET-WCF-HTTP-Activation45,Web-Static-Content,Web-Default-Doc,Web-Dir-Browsing,Web-Http-Errors,Web-Http-Logging,Web-Request-Monitor,Web-Filtering,Web-Stat-Compression,Web-Mgmt-Console,Web-Metabase,Web-Asp-Net,Web-Windows-Auth –Restart
 ```
 get-scomgroup _#_ print scom groups
+`set user` _#_ view computer fqdn
 `setspn -l [domain]\[server name]` _#_ list registered spns 
 `Get-SCOMResourcePool -DisplayName "Resource Pool Name" | Set-SCOMResourcePool -EnableAutomaticMembership 1` _#_ set resource pool membership type to automatic
 get-windowsfeature -computername [hostname] | where installed _#_ list installed features
-
 
 # ---
 # scsm
