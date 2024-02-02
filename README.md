@@ -472,7 +472,34 @@ reference: https://learn.microsoft.com/en-us/system-center/scom/manage-deploy-co
 ![[Pasted image 20240119181916.png]]
 - successful installation:
 ![[Pasted image 20240119182011.png]]
+4. post-installation configuration:
 
+### complete setup process
+1. dc: add service account to built-in iis_iurs group
+2. dc: add server roles "active directory certificate services": certification authority, certificate enrollment web service, certification authority web enrollment
+3. dc: create scom cert template: server manager > tools > certification authority
+4. ms: disable ie enhanced security configuration: server manager > local server > ie enhanced security configuration > off
+5. ms, install certificates (.p7b file) for scom server: open `http://dc/certsrv` using ie, download certificate chain + request certificate: advanced certificate request > create and submit a request to this ca > select scom cert template > enter scom server fqdn > install certificate
+6. ms, export certificates (.pfx file) from current user to local computer (windows + r > `mmc` > add certificates snap-in)
+7. ms: copy momcertimport.exe to same location as certificates and run cmd command as administrator:
+```cmd
+momcertimport.exe [ms certificate .pfx file]
+```
+8. ms: copy momcertimport.exe and momagent.msi files to client server
+9. client, install certificates (.p7b file) for workgroup/cross-domain server: `http://dc/certsrv` download certificate chain + advanced certificate request > scom cert template > enter target server fqdn (if workgroup: enter server name only) > install certificate
+10. client: export certificate (.pfx file) from current user then import to local computer via powershell as admin:
+```powershell
+import-certificate -filepath [path to certchain.p7b] -certstorelocation cert:\localmachine\root
+```
+11. client: install mma using momagent.exe (if mma is not already installed) or manually add management group in mma properties menu (control panel > mma > add)
+12. client, install certificates: open cmd as admin to saved certificates location and run:
+```
+momcertimport.exe [client certificate .pfx file]
+```
+```
+net stop healthservice && net start healthservice
+```
+13. client: firewall and hosts file (`c:\windows\system32\drivers\etc\hosts`)
 
 ## ---
 ## management packs
@@ -502,6 +529,69 @@ mpseal c:\mps\input\_unsealed_mp_.xml /I “c:\mps\mp” /Keyfile “c:\mps\key\
 ```
 reference: https://learn.microsoft.com/en-us/system-center/scom/manage-overview-management-pack
 https://social.technet.microsoft.com/wiki/contents/articles/15309.operations-manager-management-pack-authoring-sealing-a-management-pack.aspx
+## ---
+## databases
+### grooming and retention
+- definitions:
+	- grooming: remove unnecessary data
+	- retention: length of time data is stored before deletion, default is 7 days
+- settings: 
+	- db: opsmgr > administration > database grooming
+	- dwdb: opsmgr > authoring > management pack objects > overrides > management pack objects type: rule > target: all management servers resource pool > partitioning and grooming
+- manual grooming (sql queries within ssms): 
+```sql
+--manually run grooming for 'resolved alerts' 
+DECLARE @DatasetId uniqueidentifier 
+SET @DatasetId = (SELECT DatasetId FROM StandardDataset WHERE SchemaName = 'Alert') 
+EXEC StandardDatasetGroom @DatasetId
+
+--manually run grooming for 'event data'
+DECLARE @DatasetId uniqueidentifier 
+SET @DatasetId = (SELECT DatasetId FROM StandardDataset WHERE SchemaName = 'Event') 
+EXEC StandardDatasetGroom @DatasetId
+
+--manually run grooming for 'performance data & signature'
+DECLARE @DataSetId uniqueidentifier 
+SET @DataSetId = (SELECT DatasetId FROM StandardDataset WHERE SchemaName = 'Perf') 
+EXEC StandardDatasetGroom @DataSetId
+
+--manually run grooming for 'state change events data'
+DECLARE @DataSetId uniqueidentifier 
+SET @DataSetId = (SELECT DatasetId FROM StandardDataset WHERE SchemaName = 'State') 
+EXEC StandardDatasetGroom @DataSetId
+```
+- to query current retention settings:
+```sql
+--Retention Settings 
+--This is the current setting for retention in your DW and the current Grooming Interval 
+SELECT ds.datasetDefaultName AS 'Dataset Name', 
+CASE 
+WHEN sda.AggregationTypeId = 0 THEN 'raw' 
+WHEN sda.AggregationTypeId = 20 THEN 'hourly' 
+WHEN sda.AggregationTypeId = 30 THEN 'daily' 
+ELSE 'unknown' 
+END AS 'AggregationType', 
+sda.MaxDataAgeDays AS 'RetentionDays', 
+sda.GroomingIntervalMinutes 
+FROM dataset ds, StandardDatasetAggregation sda 
+WHERE ds.datasetid = sda.datasetid 
+--AND ds.datasetDefaultName IN ('Alert data set','Event data set','Performance data set','State data set') 
+ORDER by ds.datasetDefaultName
+```
+- to search by name in ssms: expand folder > right-click folder > filter > filter settings > enter name in name field > ok
+
+references: 
+https://learn.microsoft.com/en-us/system-center/scom/manage-omdb-grooming-settings?view=sc-om-2019
+https://kevinholman.com/2010/01/05/understanding-and-modifying-data-warehouse-retention-and-grooming
+https://kevinholman.com/2008/02/12/grooming-process-in-the-scom-database
+https://kevinholman.com/2013/10/03/scom-2012-grooming-deep-dive-in-the-operationsmanager-database
+
+## ---
+## reporting & notification subscriptions
+
+
+references:
+https://support.microsoft.com/en-us/office/pop-imap-and-smtp-settings-for-outlook-com-d088b986-291d-42b8-9564-9c414e2aa040
 
 ## ---
 ## OMS vs. OM
@@ -519,16 +609,26 @@ https://social.technet.microsoft.com/wiki/contents/articles/15309.operations-man
 
 ## ---
 ## terminal commands
-
 Activate IIS on ms:
 ```powershell
 Add-WindowsFeature NET-WCF-HTTP-Activation45,Web-Static-Content,Web-Default-Doc,Web-Dir-Browsing,Web-Http-Errors,Web-Http-Logging,Web-Request-Monitor,Web-Filtering,Web-Stat-Compression,Web-Mgmt-Console,Web-Metabase,Web-Asp-Net,Web-Windows-Auth –Restart
 ```
-get-scomgroup _#_ print scom groups
 `set user` _#_ view computer fqdn
+[System.Net.Dns]::GetHostByName($env:COMPUTERNAME).HostName _#_ 
 `setspn -l [domain]\[server name]` _#_ list registered spns 
-`Get-SCOMResourcePool -DisplayName "Resource Pool Name" | Set-SCOMResourcePool -EnableAutomaticMembership 1` _#_ set resource pool membership type to automatic
+`get-scomgroup` _#_ print scom groups
+`get-scomresourcepool -displayname "resource pool name" | set-scomresourcepool -enableautomaticmembership 1` _#_ set resource pool membership type to automatic
 get-windowsfeature -computername [hostname] | where installed _#_ list installed features
+`import-certificate -filepath [path to .p7b cert file] -certstorelocation cert:\localmachine\root` _#_ import certificate to both current user and local computer
+restart health service (microsoft monitoring agent):
+```cmd
+net stop healthservice && net start healthservice
+```
+or
+```powershell
+stop-service -name healthservice;  start-service -name healthservice
+```
+
 
 # ---
 # scsm
@@ -637,3 +737,16 @@ monitors: define health state for particular aspects of the monitored object; ca
 	   at Microsoft.EnterpriseManagement.Common.Internal.SdkDataLayerProxyCore.ConstructEnterpriseManagementGroupInternal[T,P](EnterpriseManagementConnectionSettings connectionSettings, ClientDataAccessCore clientCallback)
 	   at Microsoft.EnterpriseManagement.Common.Internal.SdkDataLayerProxyCore.RetrieveEnterpriseManagementGroupInternal[T,P
 	```
+solution: set correct scda service log on account
+
+## operations manager cannot connect to web service the microsoft management pack catalog web service cannot be contacted at this time
+![[Pasted image 20240131100910.png]]
+solution: configure schusestrongcrypto registry keys and restart opsmgr
+```powershell
+- `Set-ItemProperty -Path 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NetFramework\v4.0.30319' -Name 'SchUseStrongCrypto' -Value '1' -Type DWord`
+```
+```powershell
+- `Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\.NetFramework\v4.0.30319' -Name 'SchUseStrongCrypto' -Value '1' -Type DWord`
+```
+reference: [Defaulting Your System to use TLS 1.2 for .NET Applications - KB510 - (inflectra.com)](https://www.inflectra.com/Support/KnowledgeBase/KB510.aspx)
+
