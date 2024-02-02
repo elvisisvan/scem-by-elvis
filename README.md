@@ -588,11 +588,49 @@ https://kevinholman.com/2013/10/03/scom-2012-grooming-deep-dive-in-the-operation
 
 ## ---
 ## reporting & notification subscriptions
+opsmgr > administration > notifications > subscriptions
 
+smtp port: 587
 
 references:
 https://support.microsoft.com/en-us/office/pop-imap-and-smtp-settings-for-outlook-com-d088b986-291d-42b8-9564-9c414e2aa040
 
+## acs
+- ms: opsmgr > monitoring >  microsoft audit collection services > forwarder
+
+### retention
+on sql server, 
+- query acs database retention:
+```sql
+USE OperationsManagerAC
+SELECT Value FROM dtConfig 
+WHERE Id = 6
+```
+- modify acs database retention: 
+```sql
+USE OperationsManagerAC  
+UPDATE dtConfig  
+SET Value = <number of days to retain data + 1>  
+WHERE Id = 6
+```
+### filtering
+on ms (acs server), windows + r > regedit > 1. `HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\AdtServer\Parameters` > right-click > permissions > network service > full control, open cms as admin and run:
+```powershell
+adtadmin /setquery /query:"SELECT * FROM AdtsEvent WHERE NOT (EventID=528 or EventID=540 or EventID=680)"
+```
+or, for advanced collected events filtering:
+```powershell
+adtadmin /setquery /query:"SELECT * FROM AdtsEvent WHERE NOT (((EventId=528 AND String01='5') OR (EventId=576 AND (String01='SeChangeNotifyPrivilege' OR HeaderDomain='NT Authority')) OR (EventId=538 OR EventId=566 OR EventId=672 OR EventId=680)))"
+```
+### deploying
+on sql server, open powershell as admin, navigate to where save acs reports and run:
+```powershell
+UploadAuditReports "<AuditDBServer\Instance>" "<Reporting Server URL>" "<path of the copied acs folder>"
+```
+
+references:
+https://learn.microsoft.com/en-us/troubleshoot/system-center/scom/acs-reports-return-no-more-than-42-days-data
+https://blakedrumm.com/blog/acs-collector-troubleshooting-tips/#set-filter-for-acs-data
 ## ---
 ## OMS vs. OM
 - oms is suitable when beginning to extend a small single-server network
