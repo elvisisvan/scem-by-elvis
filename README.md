@@ -323,11 +323,11 @@ to list registered spn:
 setspn -l [domain]\[server name]
 ```
 example: 
-```
+```powershell
 setspn -l elvis\ms
 ```
 to register spn (for each management server):
-```
+```powershell
 setspn -s MSOMSdkSvc/[server name].opsmgr.net [domain]\omdas
 setspn -s MSOMSdkSvc/[server name] [domain]\omdas
 ```
@@ -351,7 +351,7 @@ https://learn.microsoft.com/en-us/system-center/scom/manage-security-create-runa
 
 ---
 ### TLS 1.2
-**back up registry before edit**
+**back up registry before editing**
 - should be enabled for all incoming/outcoming coms
 - 2 methods to configure system to only use tls 1.2 protocol: manual and automatic registry modification
 - for windows os:
@@ -361,11 +361,15 @@ https://learn.microsoft.com/en-us/system-center/scom/manage-security-create-runa
 		3. create **Protocols** subkey for ssl 2.0, ssl 3.0, tls 1.0, tls 1.1, tls 1.2
 		4. create client and server subkey under each protocol
 		5. create DWORD values under each protocol to enable/disable them: 
-			- **Enabled** [Value = 0]
-		    - **DisabledByDefault** [Value = 1]
-		    - or
-			- **Enabled** [Value = 1]
-		    - **DisabledByDefault** [Value = 0]
+			  ```
+			Enabled [Value = 0]
+			DisabledByDefault [Value = 1]
+			```
+		    or
+			  ```
+			Enabled [Value = 1]
+		    DisabledByDefault[Value = 0]
+			```
 	- automatic:
 		```powershell
 		$ProtocolList       = @("SSL 2.0", "SSL 3.0", "TLS 1.0", "TLS 1.1", "TLS 1.2")
@@ -425,9 +429,7 @@ https://learn.microsoft.com/en-us/system-center/scom/manage-security-create-runa
 	4. change driver entry to `%WINDIR%\system32\msodbcsql17.dll`
 	- alternative methods: 
 		1. create new .reg file and execute it, file name: ODBC 17.reg
-		```powershell
-			Windows Registry Editor Version 5.00
-		
+		```
 		[HKEY_LOCAL_MACHINE\SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources]
 		"OpsMgrAC"="ODBC Driver 17 for SQL Server"
 		
@@ -439,8 +441,8 @@ https://learn.microsoft.com/en-us/system-center/scom/manage-security-create-runa
 		New-ItemProperty -Path "HKLM:\SOFTWARE\ODBC\ODBC.INI\OpsMgrAC" -Name "Driver" -Value "%WINDIR%\system32\msodbcsql7.dll" -PropertyType STRING -Force | Out-Null
 		New-ItemProperty -Path "HKLM:\SOFTWARE\ODBC\ODBC.INI\ODBC Data Sources" -Name "OpsMgrAC" -Value "ODBC Driver 17 for SQL Server" -PropertyType STRING -Force | Out-Null
 		```
-reference: [Implement TLS 1.2 for Operations Manager | Microsoft Learn](https://learn.microsoft.com/en-us/system-center/scom/plan-security-tls12-config?view=sc-om-2019)
 
+reference: [Implement TLS 1.2 for Operations Manager | Microsoft Learn](https://learn.microsoft.com/en-us/system-center/scom/plan-security-tls12-config?view=sc-om-2019)
 
 ## ---
 ## agents 
@@ -456,6 +458,9 @@ reference: https://learn.microsoft.com/en-us/system-center/scom/manage-deploy-co
 
 ---
 ### agent cache
+how to clear mma cache (stop mma on target server before proceeding):
+- within opsmgr: monitoring > operations manager > agent details > agent health state > tasks > health service tasks > flush health service state and cache
+- in file explorer: `c:\program files\microsoft system center\operations manager\server\health service state`
 
 ---
 ### maintenance mode
@@ -536,8 +541,12 @@ https://social.technet.microsoft.com/wiki/contents/articles/15309.operations-man
 	- grooming: remove unnecessary data
 	- retention: length of time data is stored before deletion, default is 7 days
 - settings: 
-	- db: opsmgr > administration > database grooming
-	- dwdb: opsmgr > authoring > management pack objects > overrides > management pack objects type: rule > target: all management servers resource pool > partitioning and grooming
+	- db: opsmgr > administration > settings > database grooming
+		![[Screenshot 2024-02-01 110046.png]]
+	- grooming automation: opsmgr > authoring > management pack objects > overrides > management pack objects type: rule > target: all management servers resource pool > partitioning and grooming
+	- dwdb retention:
+		![[Pasted image 20240206125753.png]]
+
 - manual grooming (sql queries within ssms): 
 ```sql
 --manually run grooming for 'resolved alerts' 
@@ -595,8 +604,14 @@ smtp port: 587
 references:
 https://support.microsoft.com/en-us/office/pop-imap-and-smtp-settings-for-outlook-com-d088b986-291d-42b8-9564-9c414e2aa040
 
+## ---
 ## acs
+### forwarding
+- ms: opsmgr > monitoring > operations manager > agent details > agent health state > tasks > health service task > enable audit collection
+![[Pasted image 20240205175903.png]]
+![[Pasted image 20240205180353.png]]
 - ms: opsmgr > monitoring >  microsoft audit collection services > forwarder
+![[Pasted image 20240206163104.png]]
 
 ### retention
 on sql server, 
@@ -610,14 +625,18 @@ WHERE Id = 6
 ```sql
 USE OperationsManagerAC  
 UPDATE dtConfig  
-SET Value = <number of days to retain data + 1>  
+SET Value = <number of days to retain data + 1> 
 WHERE Id = 6
 ```
+![[Screenshot 2024-02-02 200357.png]]
 ### filtering
-on ms (acs server), windows + r > regedit > 1. `HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\AdtServer\Parameters` > right-click > permissions > network service > full control, open cms as admin and run:
-```powershell
+on ms (acs server), windows + r > regedit > 1. `HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\AdtServer\Parameters` > right-click > permissions > network service > full control, open cmd as admin and run:
+```cmd
+cd C:\Windows\System32\Security\AdtServer
 adtadmin /setquery /query:"SELECT * FROM AdtsEvent WHERE NOT (EventID=528 or EventID=540 or EventID=680)"
 ```
+![[Pasted image 20240206172601.png]]
+
 or, for advanced collected events filtering:
 ```powershell
 adtadmin /setquery /query:"SELECT * FROM AdtsEvent WHERE NOT (((EventId=528 AND String01='5') OR (EventId=576 AND (String01='SeChangeNotifyPrivilege' OR HeaderDomain='NT Authority')) OR (EventId=538 OR EventId=566 OR EventId=672 OR EventId=680)))"
@@ -627,6 +646,11 @@ on sql server, open powershell as admin, navigate to where save acs reports and 
 ```powershell
 UploadAuditReports "<AuditDBServer\Instance>" "<Reporting Server URL>" "<path of the copied acs folder>"
 ```
+![[Pasted image 20240206163305.png]]
+![[Pasted image 20240206163319.png]]
+![[Screenshot 2024-02-02 194822.png]]
+![[Screenshot 2024-02-02 195353.png]]
+
 
 references:
 https://learn.microsoft.com/en-us/troubleshoot/system-center/scom/acs-reports-return-no-more-than-42-days-data
@@ -651,8 +675,11 @@ Activate IIS on ms:
 ```powershell
 Add-WindowsFeature NET-WCF-HTTP-Activation45,Web-Static-Content,Web-Default-Doc,Web-Dir-Browsing,Web-Http-Errors,Web-Http-Logging,Web-Request-Monitor,Web-Filtering,Web-Stat-Compression,Web-Mgmt-Console,Web-Metabase,Web-Asp-Net,Web-Windows-Auth –Restart
 ```
-`set user` _#_ view computer fqdn
-[System.Net.Dns]::GetHostByName($env:COMPUTERNAME).HostName _#_ 
+(cmd) `set user` _#_ view computer fqdn
+(powershell) one-liner computer fqdn:
+```powershell
+[System.Net.Dns]::GetHostByName($env:COMPUTERNAME).HostName
+```
 `setspn -l [domain]\[server name]` _#_ list registered spns 
 `get-scomgroup` _#_ print scom groups
 `get-scomresourcepool -displayname "resource pool name" | set-scomresourcepool -enableautomaticmembership 1` _#_ set resource pool membership type to automatic
@@ -781,10 +808,11 @@ solution: set correct scda service log on account
 ![[Pasted image 20240131100910.png]]
 solution: configure schusestrongcrypto registry keys and restart opsmgr
 ```powershell
-- `Set-ItemProperty -Path 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NetFramework\v4.0.30319' -Name 'SchUseStrongCrypto' -Value '1' -Type DWord`
+Set-ItemProperty -Path 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NetFramework\v4.0.30319' -Name 'SchUseStrongCrypto' -Value '1' -Type DWord
 ```
+and
 ```powershell
-- `Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\.NetFramework\v4.0.30319' -Name 'SchUseStrongCrypto' -Value '1' -Type DWord`
+Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\.NetFramework\v4.0.30319' -Name 'SchUseStrongCrypto' -Value '1' -Type DWord
 ```
 reference: [Defaulting Your System to use TLS 1.2 for .NET Applications - KB510 - (inflectra.com)](https://www.inflectra.com/Support/KnowledgeBase/KB510.aspx)
 
