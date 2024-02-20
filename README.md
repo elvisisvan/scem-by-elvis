@@ -255,6 +255,16 @@ reference: [Understanding SCOM Resource Pools – Kevin Holman's Blog](https://k
 		- azure virtual machine: require sql server, set up configurations as described above
 ![simple](om2016-dr-simple-config-expanded.png)
 
+#### complete setup process
+1. add **failover clustering** feature on both servers 
+![[Pasted image 20240220104259.png]]
+2. complete **validate configuration** process under **management** section in failover cluster manager
+![[Pasted image 20240220104323.png]]
+![[Pasted image 20240220104330.png]]
+![[Pasted image 20240220104920.png]]
+![[Pasted image 20240220105242.png]]
+
+
 ---
 ### complete setup process
 1. domain controller (dc): create admin users (and optionally backup admin users) and add them all to a group (om administrator security group)
@@ -606,6 +616,7 @@ https://support.microsoft.com/en-us/office/pop-imap-and-smtp-settings-for-outloo
 
 ## ---
 ## acs
+setup: management server(ms), login into an account with elevated privileges (e.g. om server action), follow instructions at https://learn.microsoft.com/en-us/system-center/scom/deploy-install-acs
 ### forwarding
 - ms: opsmgr > monitoring > operations manager > agent details > agent health state > tasks > health service task > enable audit collection
 ![[Pasted image 20240205175903.png]]
